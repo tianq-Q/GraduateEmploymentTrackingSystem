@@ -1,0 +1,34 @@
+# Maven
+target/
+*.jar
+*.war
+
+# Node
+node_modules/
+dist/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Log
+*.log
+
+# Build logs
+build_log*.txt
+build_err*.txt
+dev_log.txt
+
+# Upload
+uploads/
+
+# IDE tool data
+.codebuddy/
+
+# Browser automation leftovers
+.playwright-cli/

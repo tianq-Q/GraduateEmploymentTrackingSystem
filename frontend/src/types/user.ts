@@ -1,0 +1,1 @@
+// 用户相关类型定义 - UserInfo, LoginParams, RoleType

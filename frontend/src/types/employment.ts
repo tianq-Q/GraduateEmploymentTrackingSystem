@@ -1,0 +1,1 @@
+// 就业相关类型定义 - EmploymentRecord, ReviewInfo, EmploymentStatus
