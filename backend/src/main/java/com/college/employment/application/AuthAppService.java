@@ -29,15 +29,7 @@ public class AuthAppService {
 
         String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole(), user.getDeptId());
 
-        return new LoginResponse(
-                token,
-                user.getId(),
-                user.getUsername(),
-                user.getRealName(),
-                user.getRole(),
-                user.getAvatar(),
-                user.getDeptId()
-        );
+        return toLoginResponse(user, token);
     }
 
     public LoginResponse register(RegisterRequest request) {
@@ -59,6 +51,10 @@ public class AuthAppService {
 
         String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole(), user.getDeptId());
 
+        return toLoginResponse(user, token);
+    }
+
+    private LoginResponse toLoginResponse(SysUser user, String token) {
         return new LoginResponse(
                 token,
                 user.getId(),

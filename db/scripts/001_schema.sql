@@ -6,8 +6,7 @@ CREATE DATABASE IF NOT EXISTS employment_tracking DEFAULT CHARACTER SET utf8mb4 
 USE employment_tracking;
 
 -- 1. 系统用户表
-DROP TABLE IF EXISTS sys_user;
-CREATE TABLE sys_user (
+CREATE TABLE IF NOT EXISTS sys_user (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
     username    VARCHAR(50)  NOT NULL UNIQUE COMMENT '用户名',
     password    VARCHAR(200) NOT NULL COMMENT '密码(BCrypt加密)',
@@ -26,8 +25,7 @@ CREATE TABLE sys_user (
 ) ENGINE=InnoDB COMMENT='系统用户表';
 
 -- 2. 院系表
-DROP TABLE IF EXISTS department;
-CREATE TABLE department (
+CREATE TABLE IF NOT EXISTS department (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
     name        VARCHAR(100) NOT NULL COMMENT '院系名称',
     code        VARCHAR(20)  NOT NULL UNIQUE COMMENT '院系编码',
@@ -38,8 +36,7 @@ CREATE TABLE department (
 ) ENGINE=InnoDB COMMENT='院系表';
 
 -- 3. 专业表
-DROP TABLE IF EXISTS major;
-CREATE TABLE major (
+CREATE TABLE IF NOT EXISTS major (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
     name        VARCHAR(100) NOT NULL COMMENT '专业名称',
     code        VARCHAR(20)  NOT NULL UNIQUE COMMENT '专业编码',
@@ -52,8 +49,7 @@ CREATE TABLE major (
 ) ENGINE=InnoDB COMMENT='专业表';
 
 -- 4. 班级表
-DROP TABLE IF EXISTS class_info;
-CREATE TABLE class_info (
+CREATE TABLE IF NOT EXISTS class_info (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
     name        VARCHAR(100) NOT NULL COMMENT '班级名称',
     major_id    BIGINT       NOT NULL COMMENT '所属专业ID',
@@ -66,8 +62,7 @@ CREATE TABLE class_info (
 ) ENGINE=InnoDB COMMENT='班级表';
 
 -- 5. 毕业生表
-DROP TABLE IF EXISTS graduate;
-CREATE TABLE graduate (
+CREATE TABLE IF NOT EXISTS graduate (
     id            BIGINT AUTO_INCREMENT PRIMARY KEY,
     student_no    VARCHAR(30)  NOT NULL UNIQUE COMMENT '学号',
     name          VARCHAR(50)  NOT NULL COMMENT '姓名',
@@ -90,8 +85,7 @@ CREATE TABLE graduate (
 ) ENGINE=InnoDB COMMENT='毕业生表';
 
 -- 6. 就业记录表
-DROP TABLE IF EXISTS employment_record;
-CREATE TABLE employment_record (
+CREATE TABLE IF NOT EXISTS employment_record (
     id              BIGINT AUTO_INCREMENT PRIMARY KEY,
     graduate_id     BIGINT       NOT NULL COMMENT '毕业生ID',
     company_name    VARCHAR(200) DEFAULT NULL COMMENT '单位名称',
@@ -113,8 +107,7 @@ CREATE TABLE employment_record (
 ) ENGINE=InnoDB COMMENT='就业记录表';
 
 -- 7. 附件表
-DROP TABLE IF EXISTS attachment;
-CREATE TABLE attachment (
+CREATE TABLE IF NOT EXISTS attachment (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
     record_id   BIGINT       NOT NULL COMMENT '关联记录ID',
     file_name   VARCHAR(200) NOT NULL COMMENT '原始文件名',
@@ -126,8 +119,7 @@ CREATE TABLE attachment (
 ) ENGINE=InnoDB COMMENT='附件表';
 
 -- 8. 审核日志表
-DROP TABLE IF EXISTS audit_log;
-CREATE TABLE audit_log (
+CREATE TABLE IF NOT EXISTS audit_log (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
     record_id   BIGINT       NOT NULL COMMENT '就业记录ID',
     action      VARCHAR(20)  NOT NULL COMMENT '操作: PASS/REJECT',
@@ -138,8 +130,7 @@ CREATE TABLE audit_log (
 ) ENGINE=InnoDB COMMENT='审核日志表';
 
 -- 9. 登录日志表
-DROP TABLE IF EXISTS login_log;
-CREATE TABLE login_log (
+CREATE TABLE IF NOT EXISTS login_log (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id     BIGINT       DEFAULT NULL COMMENT '用户ID',
     username    VARCHAR(50)  NOT NULL COMMENT '登录用户名',
@@ -153,8 +144,7 @@ CREATE TABLE login_log (
 ) ENGINE=InnoDB COMMENT='登录日志表';
 
 -- 10. 操作日志表
-DROP TABLE IF EXISTS operation_log;
-CREATE TABLE operation_log (
+CREATE TABLE IF NOT EXISTS operation_log (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id     BIGINT       DEFAULT NULL COMMENT '操作用户ID',
     username    VARCHAR(50)  DEFAULT NULL COMMENT '操作用户名',
@@ -169,8 +159,7 @@ CREATE TABLE operation_log (
 ) ENGINE=InnoDB COMMENT='操作日志表';
 
 -- 11. 字典类型表
-DROP TABLE IF EXISTS dict_type;
-CREATE TABLE dict_type (
+CREATE TABLE IF NOT EXISTS dict_type (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
     code        VARCHAR(50)  NOT NULL UNIQUE COMMENT '字典编码',
     name        VARCHAR(100) NOT NULL COMMENT '字典名称',
@@ -180,8 +169,7 @@ CREATE TABLE dict_type (
 ) ENGINE=InnoDB COMMENT='字典类型表';
 
 -- 12. 字典项表
-DROP TABLE IF EXISTS dict_item;
-CREATE TABLE dict_item (
+CREATE TABLE IF NOT EXISTS dict_item (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
     type_id     BIGINT       NOT NULL COMMENT '字典类型ID',
     label       VARCHAR(100) NOT NULL COMMENT '字典标签',
@@ -194,8 +182,7 @@ CREATE TABLE dict_item (
 ) ENGINE=InnoDB COMMENT='字典项表';
 
 -- 13. 通知表
-DROP TABLE IF EXISTS notification;
-CREATE TABLE notification (
+CREATE TABLE IF NOT EXISTS notification (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id     BIGINT       NOT NULL COMMENT '接收用户ID',
     title       VARCHAR(200) NOT NULL COMMENT '通知标题',
@@ -207,8 +194,7 @@ CREATE TABLE notification (
 ) ENGINE=InnoDB COMMENT='通知表';
 
 -- 14. 系统配置表
-DROP TABLE IF EXISTS sys_config;
-CREATE TABLE sys_config (
+CREATE TABLE IF NOT EXISTS sys_config (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
     config_key   VARCHAR(100) NOT NULL UNIQUE COMMENT '配置键',
     config_value VARCHAR(500) DEFAULT NULL COMMENT '配置值',
