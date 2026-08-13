@@ -11,7 +11,7 @@ import java.util.Optional;
 @Mapper
 public interface SysUserMapper extends BaseMapper<SysUser> {
 
-    @Select("SELECT * FROM sys_user WHERE student_number = #{studentNumber} AND status = 1")
+    @Select("SELECT id, username, password, real_name, student_number, phone, email, avatar, role, dept_id, status, create_time, update_time FROM sys_user WHERE student_number = #{studentNumber} AND status = 1")
     Optional<SysUser> findByStudentNumber(@Param("studentNumber") String studentNumber);
 
     @Select("SELECT COUNT(*) FROM sys_user WHERE student_number = #{studentNumber}")
