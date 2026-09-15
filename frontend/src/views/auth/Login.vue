@@ -1,3 +1,27 @@
+<!--
+MIT License
+
+Copyright (c) 2026 Employment Tracking System
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+
 <template>
   <div class="login-page">
     <div class="login-card">
@@ -54,6 +78,12 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 登录页面
+ * - 通过学号/工号 + 密码登录（调用 /auth/login）
+ * - 登录成功后将用户信息写入 authStore，并跳转到 redirect 参数指定的页面或默认 /dashboard
+ * - 支持回车提交、跳转注册页
+ */
 import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { User, Lock } from '@element-plus/icons-vue'
@@ -67,16 +97,19 @@ const authStore = useAuthStore()
 const formRef = ref()
 const loading = ref(false)
 
+// 登录表单数据
 const form = reactive({
   username: '',
   password: '',
 })
 
+// 表单校验规则
 const rules = {
   username: [{ required: true, message: '请输入学号/工号', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
 }
 
+/** 提交登录 */
 async function handleLogin() {
   const valid = await formRef.value?.validate().catch(() => false)
   if (!valid) return
@@ -85,6 +118,7 @@ async function handleLogin() {
   try {
     const res: any = await login({ username: form.username, password: form.password })
     if (res.code === 200) {
+      // 保存登录态并跳转（优先跳转来源页面）
       authStore.setLogin(res.data)
       ElMessage.success('登录成功')
       const redirect = (route.query.redirect as string) || '/dashboard'
@@ -99,6 +133,7 @@ async function handleLogin() {
   }
 }
 
+/** 跳转注册页 */
 function goRegister() {
   router.push('/register')
 }

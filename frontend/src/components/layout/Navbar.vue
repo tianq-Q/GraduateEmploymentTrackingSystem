@@ -1,3 +1,27 @@
+<!--
+MIT License
+
+Copyright (c) 2026 Employment Tracking System
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+
 <template>
   <div class="navbar">
     <div class="left">
@@ -31,12 +55,18 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { Fold, Expand } from '@element-plus/icons-vue'
 
+/**
+ * 顶部导航栏组件
+ * - 左侧：折叠/展开侧边栏按钮（通过 emit('toggle') 通知父组件）
+ * - 右侧：当前角色标签、用户名、用户头像下拉菜单（个人中心 / 退出登录）
+ */
 defineProps<{ isCollapse: boolean }>()
 defineEmits<{ toggle: [] }>()
 
 const router = useRouter()
 const auth = useAuthStore()
 
+// 角色中文名称映射
 const roleLabel = computed(() => {
   const map: Record<string, string> = {
     GRADUATE: '毕业生',
@@ -47,6 +77,7 @@ const roleLabel = computed(() => {
   return map[auth.role] || auth.role
 })
 
+// 角色对应的 el-tag 颜色类型映射
 const roleTagType = computed(() => {
   const map: Record<string, string> = {
     GRADUATE: 'info',
@@ -57,6 +88,7 @@ const roleTagType = computed(() => {
   return map[auth.role] || 'info'
 })
 
+/** 处理头像下拉菜单指令：跳转个人中心 / 退出登录 */
 function handleCommand(cmd: string) {
   if (cmd === 'profile') router.push('/profile')
   else if (cmd === 'logout') { auth.logout(); router.push('/login') }

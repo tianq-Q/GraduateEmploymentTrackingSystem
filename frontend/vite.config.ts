@@ -10,10 +10,11 @@ export default defineConfig({
     },
   },
   server: {
+    host: true, // 同时监听 0.0.0.0，避免 localhost 解析为 IPv6 ::1 而代理失败
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://127.0.0.1:8080',
         changeOrigin: true,
       },
     },

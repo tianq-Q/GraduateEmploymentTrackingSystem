@@ -1,3 +1,27 @@
+<!--
+MIT License
+
+Copyright (c) 2026 Employment Tracking System
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+
 <template>
   <div class="dashboard">
     <!-- 统计卡片 -->
@@ -132,6 +156,11 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 就业数据看板页面（管理员视图）
+ * - 顶部指标卡：毕业生总数 / 已就业 / 就业率 / 待审核
+ * - ECharts 图表：就业率趋势折线图、院系毕业生/已就业柱状图、就业去向环形图
+ */
 import { computed } from 'vue'
 import VChart from 'vue-echarts'
 import { use } from 'echarts/core'
@@ -141,6 +170,7 @@ import {
   TitleComponent, TooltipComponent, LegendComponent, GridComponent,
 } from 'echarts/components'
 
+// 注册 ECharts 渲染器与所需图表组件
 use([CanvasRenderer, LineChart, BarChart, PieChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent])
 
 // 就业趋势

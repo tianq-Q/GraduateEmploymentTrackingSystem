@@ -1,3 +1,27 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2026 Employment Tracking System
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 -- ==========================================
 -- 就业跟踪系统 - 完整建表脚本
 -- ==========================================
@@ -19,8 +43,8 @@ CREATE TABLE sys_user (
     role        VARCHAR(20)  NOT NULL DEFAULT 'STUDENT' COMMENT '角色: ADMIN/TEACHER/STUDENT',
     dept_id     BIGINT       DEFAULT NULL COMMENT '所属院系ID',
     status      TINYINT      NOT NULL DEFAULT 1 COMMENT '状态: 1启用 0禁用',
-    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     INDEX idx_role (role),
     INDEX idx_dept_id (dept_id)
 ) ENGINE=InnoDB COMMENT='系统用户表';
@@ -32,8 +56,8 @@ CREATE TABLE department (
     code        VARCHAR(20)  NOT NULL UNIQUE COMMENT '院系编码',
     sort_order  INT          DEFAULT 0 COMMENT '排序号',
     status      TINYINT      NOT NULL DEFAULT 1 COMMENT '状态',
-    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
 ) ENGINE=InnoDB COMMENT='院系表';
 
 -- 3. 专业表
@@ -44,8 +68,8 @@ CREATE TABLE major (
     dept_id     BIGINT       NOT NULL COMMENT '所属院系ID',
     sort_order  INT          DEFAULT 0 COMMENT '排序号',
     status      TINYINT      NOT NULL DEFAULT 1 COMMENT '状态',
-    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     INDEX idx_dept_id (dept_id)
 ) ENGINE=InnoDB COMMENT='专业表';
 
@@ -57,8 +81,8 @@ CREATE TABLE class_info (
     grade       VARCHAR(10)  NOT NULL COMMENT '年级(如2022)',
     sort_order  INT          DEFAULT 0 COMMENT '排序号',
     status      TINYINT      NOT NULL DEFAULT 1 COMMENT '状态',
-    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     INDEX idx_major_id (major_id)
 ) ENGINE=InnoDB COMMENT='班级表';
 
@@ -77,8 +101,8 @@ CREATE TABLE graduate (
     grade         VARCHAR(10)  NOT NULL COMMENT '年级',
     graduate_year VARCHAR(10)  NOT NULL COMMENT '毕业年份',
     employment_status VARCHAR(20) DEFAULT 'UNEMPLOYED' COMMENT '就业状态',
-    create_time   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_time   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    create_time   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     INDEX idx_dept_id (dept_id),
     INDEX idx_major_id (major_id),
     INDEX idx_class_id (class_id),
@@ -96,12 +120,15 @@ CREATE TABLE employment_record (
     salary_range    VARCHAR(50)  DEFAULT NULL COMMENT '薪资范围',
     city            VARCHAR(50)  DEFAULT NULL COMMENT '工作城市',
     destination     VARCHAR(30)  NOT NULL COMMENT '去向: 签约就业/升学/出国/创业/灵活就业/待就业',
-    review_status   VARCHAR(20)  NOT NULL DEFAULT 'PENDING' COMMENT '审核状态: PENDING/PASSED/REJECTED',
+    review_status   VARCHAR(20)  NOT NULL DEFAULT 'PENDING' COMMENT '审核状态: PENDING/FIRST_PASSED/FIRST_REJECTED/APPROVED/FINAL_REJECTED',
     review_comment  VARCHAR(500) DEFAULT NULL COMMENT '审核意见',
     reviewer_id     BIGINT       DEFAULT NULL COMMENT '审核人ID',
     review_time     DATETIME     DEFAULT NULL COMMENT '审核时间',
-    create_time     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_time     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    is_proxy        TINYINT      DEFAULT 0 COMMENT '是否代录: 0否 1是',
+    submitter_id    BIGINT       DEFAULT NULL COMMENT '提交人ID',
+    submitter_name  VARCHAR(50)  DEFAULT NULL COMMENT '提交人姓名',
+    create_time     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     INDEX idx_graduate_id (graduate_id),
     INDEX idx_review_status (review_status),
     INDEX idx_destination (destination)
@@ -115,7 +142,7 @@ CREATE TABLE attachment (
     file_path   VARCHAR(300) NOT NULL COMMENT '存储路径',
     file_size   BIGINT       DEFAULT 0 COMMENT '文件大小(字节)',
     file_type   VARCHAR(50)  DEFAULT NULL COMMENT '文件类型',
-    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     INDEX idx_record_id (record_id)
 ) ENGINE=InnoDB COMMENT='附件表';
 
@@ -123,10 +150,12 @@ CREATE TABLE attachment (
 CREATE TABLE audit_log (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
     record_id   BIGINT       NOT NULL COMMENT '就业记录ID',
-    action      VARCHAR(20)  NOT NULL COMMENT '操作: PASS/REJECT',
-    comment     VARCHAR(500) DEFAULT NULL COMMENT '审核意见',
+    action      VARCHAR(30)  NOT NULL COMMENT '操作: SUBMIT/WITHDRAW/UPDATE/FIRST_PASS/FIRST_REJECT/FINAL_PASS/FINAL_REJECT/PROXY_SUBMIT',
+    comment     VARCHAR(500) DEFAULT NULL COMMENT '审核意见/操作说明',
     operator_id BIGINT       NOT NULL COMMENT '操作人ID',
-    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    operator_name VARCHAR(50) DEFAULT NULL COMMENT '操作人姓名',
+    operator_role VARCHAR(20) DEFAULT NULL COMMENT '操作人角色',
+    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     INDEX idx_record_id (record_id)
 ) ENGINE=InnoDB COMMENT='审核日志表';
 
@@ -139,7 +168,7 @@ CREATE TABLE login_log (
     user_agent  VARCHAR(500) DEFAULT NULL COMMENT '浏览器UA',
     status      TINYINT      NOT NULL DEFAULT 1 COMMENT '1成功 0失败',
     message     VARCHAR(200) DEFAULT NULL COMMENT '消息',
-    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     INDEX idx_user_id (user_id),
     INDEX idx_create_time (create_time)
 ) ENGINE=InnoDB COMMENT='登录日志表';
@@ -155,7 +184,7 @@ CREATE TABLE operation_log (
     params      TEXT         DEFAULT NULL COMMENT '请求参数',
     ip          VARCHAR(50)  DEFAULT NULL COMMENT '请求IP',
     duration    BIGINT       DEFAULT 0 COMMENT '耗时(ms)',
-    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     INDEX idx_create_time (create_time)
 ) ENGINE=InnoDB COMMENT='操作日志表';
 
@@ -165,8 +194,8 @@ CREATE TABLE dict_type (
     code        VARCHAR(50)  NOT NULL UNIQUE COMMENT '字典编码',
     name        VARCHAR(100) NOT NULL COMMENT '字典名称',
     status      TINYINT      NOT NULL DEFAULT 1 COMMENT '状态',
-    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
 ) ENGINE=InnoDB COMMENT='字典类型表';
 
 -- 12. 字典项表
@@ -177,8 +206,8 @@ CREATE TABLE dict_item (
     value       VARCHAR(100) NOT NULL COMMENT '字典值',
     sort_order  INT          DEFAULT 0 COMMENT '排序号',
     status      TINYINT      NOT NULL DEFAULT 1 COMMENT '状态',
-    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     INDEX idx_type_id (type_id)
 ) ENGINE=InnoDB COMMENT='字典项表';
 
@@ -189,7 +218,7 @@ CREATE TABLE notification (
     title       VARCHAR(200) NOT NULL COMMENT '通知标题',
     content     TEXT         DEFAULT NULL COMMENT '通知内容',
     is_read     TINYINT      NOT NULL DEFAULT 0 COMMENT '0未读 1已读',
-    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     INDEX idx_user_id (user_id),
     INDEX idx_is_read (is_read)
 ) ENGINE=InnoDB COMMENT='通知表';
@@ -200,6 +229,6 @@ CREATE TABLE sys_config (
     config_key   VARCHAR(100) NOT NULL UNIQUE COMMENT '配置键',
     config_value VARCHAR(500) DEFAULT NULL COMMENT '配置值',
     description VARCHAR(200) DEFAULT NULL COMMENT '配置说明',
-    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    create_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    update_time DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
 ) ENGINE=InnoDB COMMENT='系统配置表';

@@ -1,443 +1,483 @@
+<!--
+MIT License
+
+Copyright (c) 2026 Employment Tracking System
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+
 <template>
   <div class="dashboard">
-    <!-- 统计卡片 -->
-    <div class="stat-cards">
-      <div class="stat-card blue">
-        <div class="card-inner">
-          <div class="card-info">
-            <div class="card-label">毕业生总数</div>
-            <div class="card-value">2,486</div>
-            <div class="card-trend up">
-              <el-icon><Top /></el-icon>
-              <span>较去年 +12%</span>
-            </div>
-          </div>
-          <div class="card-icon">
-            <div class="icon-bg">
-              <el-icon :size="28"><School /></el-icon>
-            </div>
-          </div>
-        </div>
+    <!-- 顶部操作条 -->
+    <div class="dashboard__toolbar">
+      <div class="dashboard__title-wrap">
+        <h2 class="dashboard__title">就业数据看板</h2>
+        <el-tag class="freq-tag" type="info" effect="plain" size="small">每学期更新</el-tag>
+        <el-tag class="freq-tag" effect="plain" size="small">当前角色：{{ role || '未登录' }}</el-tag>
       </div>
-
-      <div class="stat-card green">
-        <div class="card-inner">
-          <div class="card-info">
-            <div class="card-label">已就业人数</div>
-            <div class="card-value">2,103</div>
-            <div class="card-trend up">
-              <el-icon><Top /></el-icon>
-              <span>较去年 +8%</span>
-            </div>
-          </div>
-          <div class="card-icon">
-            <div class="icon-bg">
-              <el-icon :size="28"><Briefcase /></el-icon>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="stat-card orange">
-        <div class="card-inner">
-          <div class="card-info">
-            <div class="card-label">就业率</div>
-            <div class="card-value">84.6%</div>
-            <div class="card-trend up">
-              <el-icon><Top /></el-icon>
-              <span>较去年 +3.2%</span>
-            </div>
-          </div>
-          <div class="card-icon">
-            <div class="icon-bg">
-              <el-icon :size="28"><TrendCharts /></el-icon>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="stat-card red">
-        <div class="card-inner">
-          <div class="card-info">
-            <div class="card-label">待审核信息</div>
-            <div class="card-value">56</div>
-            <div class="card-trend down">
-              <el-icon><Bottom /></el-icon>
-              <span>较上周 -25%</span>
-            </div>
-          </div>
-          <div class="card-icon">
-            <div class="icon-bg">
-              <el-icon :size="28"><DocumentChecked /></el-icon>
-            </div>
-          </div>
-        </div>
+      <div class="dashboard__actions">
+        <el-tag v-if="overview" type="info" effect="plain" class="sync-tag">
+          <el-icon><Clock /></el-icon> 最近同步：{{ overview.syncTime }}
+        </el-tag>
+        <el-button class="toolbar-btn" :loading="syncing" @click="handleSync" v-if="canSync">
+          <el-icon><Refresh /></el-icon> 同步刷新
+        </el-button>
+        <el-button class="toolbar-btn toolbar-btn--accent" :disabled="!canExport" @click="canExport && handleExport()"
+          :title="canExport ? '' : '仅管理员/教师可导出'">
+          <el-icon><Document /></el-icon> 导出报表
+        </el-button>
+        <el-button class="toolbar-btn toolbar-btn--accent" :disabled="!canExport" :loading="exportingCharts"
+          @click="canExport && handleExportCharts()" :title="canExport ? '' : '仅管理员/教师可导出'">
+          <el-icon><Picture /></el-icon> 导出图表
+        </el-button>
       </div>
     </div>
 
-    <!-- 图表区域 -->
+    <!-- ① 就业率统计 数字卡片 -->
+    <div class="stat-cards" v-loading="loadingOverview">
+      <StatCard title="毕业生总数" :value="fmt(overview?.totalGraduates)" icon="UserFilled" color="#4f8cff" />
+      <StatCard title="已落实去向" :value="fmt(overview?.employedCount)" icon="Briefcase" color="#52c41a" />
+      <StatCard title="待就业" :value="fmt(overview?.waitingCount)" icon="WarningFilled" color="#fa8c16" />
+      <StatCard title="总体就业率" :value="fmt(overview?.employmentRate)" suffix="%" icon="TrendCharts" color="#722ed1" />
+    </div>
+
+    <!-- ② 可视化图表 -->
     <div class="chart-grid">
-      <!-- 就业趋势 -->
-      <div class="chart-card">
-        <div class="chart-header">
-          <h3>就业趋势</h3>
-          <span class="chart-subtitle">近12个月</span>
-        </div>
-        <div class="chart-body">
-          <v-chart :option="trendOption" autoresize />
-        </div>
-      </div>
+      <el-card class="chart-card" shadow="hover">
+        <div class="chart-header"><h3>院系就业率对比</h3><span class="chart-tag">柱状图</span></div>
+        <BarChart ref="chartDept" title="各院系就业率(%)"
+          :categories="deptCats" :series="[{ name: '就业率', data: deptRates }]" color="#4f8cff" />
+      </el-card>
 
-      <!-- 院系分布 -->
-      <div class="chart-card">
-        <div class="chart-header">
-          <h3>各院系就业统计</h3>
-          <span class="chart-subtitle">本年度</span>
-        </div>
-        <div class="chart-body">
-          <v-chart :option="departmentOption" autoresize />
-        </div>
-      </div>
+      <el-card class="chart-card" shadow="hover">
+        <div class="chart-header"><h3>月度就业率趋势</h3><span class="chart-tag">折线图</span></div>
+        <LineChartLite ref="chartTrend" :months="trendMonths" :rates="trendRates" />
+      </el-card>
     </div>
 
-    <!-- 底部区域 -->
-    <div class="bottom-grid">
-      <!-- 就业去向分布 -->
-      <div class="chart-card">
-        <div class="chart-header">
-          <h3>就业去向分布</h3>
-        </div>
-        <div class="chart-body pie-body">
-          <v-chart :option="pieOption" autoresize />
-        </div>
-      </div>
+    <div class="chart-grid">
+      <el-card class="chart-card" shadow="hover">
+        <div class="chart-header"><h3>就业去向分布</h3><span class="chart-tag">饼图</span></div>
+        <PieChart ref="chartDest" title="就业去向" :data="destinationPie" />
+      </el-card>
 
-      <!-- 最新动态 -->
-      <div class="chart-card">
+      <el-card class="chart-card" shadow="hover">
+        <div class="chart-header"><h3>行业分布 Top10</h3><span class="chart-tag">横向柱状图</span></div>
+        <BarChart ref="chartIndustry" title="行业分布" :horizontal="true"
+          :categories="industryCats" :series="[{ name: '人数', data: industryCounts }]" color="#36cfc9" />
+      </el-card>
+    </div>
+
+    <div class="chart-grid">
+      <el-card class="chart-card" shadow="hover">
+        <div class="chart-header"><h3>单位性质分布</h3><span class="chart-tag">饼图</span></div>
+        <PieChart ref="chartCompany" title="单位性质" :data="companyTypePie" />
+      </el-card>
+
+      <!-- ④ 业务通知 -->
+      <el-card class="chart-card" shadow="hover">
         <div class="chart-header">
-          <h3>最新动态</h3>
-        </div>
-        <div class="timeline-list">
-          <div class="timeline-item" v-for="item in activities" :key="item.id">
-            <div class="timeline-dot" :class="item.type"></div>
-            <div class="timeline-content">
-              <p class="timeline-text">{{ item.content }}</p>
-              <span class="timeline-time">{{ item.time }}</span>
-            </div>
+          <h3>业务通知</h3>
+          <div class="notify-filter">
+            <el-badge :value="unreadCount" :hidden="unreadCount === 0" type="danger">
+              <el-button text size="small" @click="loadNotifications(false)">全部</el-button>
+            </el-badge>
+            <el-button text size="small" @click="loadNotifications(true)">未读</el-button>
           </div>
         </div>
-      </div>
+        <el-scrollbar height="300px">
+          <div v-if="notifications.length === 0" class="empty">暂无通知</div>
+          <div v-for="n in notifications" :key="n.id" class="notify-item" :class="{ unread: n.isRead === 0 }">
+            <div class="notify-title">
+              <el-tag v-if="n.isRead === 0" size="small" type="danger" effect="dark">未读</el-tag>
+              {{ n.title }}
+            </div>
+            <div class="notify-content">{{ n.content }}</div>
+            <div class="notify-foot">
+              <span>{{ n.createTime }}</span>
+              <el-button v-if="n.isRead === 0" text type="primary" size="small" @click="readNotify(n.id)">标记已读</el-button>
+            </div>
+          </div>
+        </el-scrollbar>
+      </el-card>
     </div>
+
+    <!-- ⑤ 操作日志 -->
+    <el-card class="chart-card log-card" shadow="hover" style="margin-top: 4px">
+      <div class="chart-header">
+        <h3>操作日志</h3>
+        <div>
+          <el-select v-model="logQuery.module" placeholder="模块" clearable style="width: 140px; margin-right: 8px">
+            <el-option label="数据看板" value="dashboard" />
+            <el-option label="就业信息" value="employment" />
+            <el-option label="审核" value="review" />
+          </el-select>
+          <el-button @click="loadLogs(1)">查询</el-button>
+        </div>
+      </div>
+      <el-table :data="logList" stripe v-loading="loadingLogs">
+        <el-table-column prop="module" label="模块" width="120" />
+        <el-table-column prop="action" label="操作" width="120" />
+        <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="operatorName" label="操作人" width="120" />
+        <el-table-column prop="createTime" label="时间" width="180" />
+      </el-table>
+      <el-pagination
+        v-model:current-page="logQuery.page"
+        :page-size="logQuery.size"
+        :total="logTotal"
+        layout="total, prev, pager, next"
+        style="margin-top: 12px; justify-content: flex-end"
+        @current-change="(p: number) => loadLogs(p)"
+      />
+    </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import VChart from 'vue-echarts'
-import { use } from 'echarts/core'
-import { CanvasRenderer } from 'echarts/renderers'
-import { LineChart, BarChart, PieChart } from 'echarts/charts'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import type { ComponentPublicInstance } from 'vue'
+import StatCard from '@/components/charts/StatCard.vue'
+import BarChart from '@/components/charts/BarChart.vue'
+import PieChart from '@/components/charts/PieChart.vue'
+import LineChartLite from '@/components/charts/LineChartLite.vue'
+import { useAuthStore } from '@/stores/auth'
 import {
-  TitleComponent, TooltipComponent, LegendComponent, GridComponent,
-} from 'echarts/components'
+  getOverview, getDepartmentCompare, getDestinationDistribution,
+  getIndustryDistribution, getCompanyTypeDistribution, getMonthlyTrend,
+  syncDashboard, exportDashboardCsv,
+  getNotifications, getUnreadCount, markNotificationRead,
+  getOperationLogs,
+} from '@/api/dashboard'
+import type {
+  DashboardOverview, DepartmentCompare, DestinationChart,
+  IndustryChart, TrendChart, NotificationItem, OperationLogItem,
+} from '@/types/dashboard'
 
-use([CanvasRenderer, LineChart, BarChart, PieChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent])
+const auth = useAuthStore()
 
-// 就业趋势
-const trendOption = computed(() => ({
-  tooltip: {
-    trigger: 'axis',
-    backgroundColor: '#fff',
-    borderColor: '#e5e7eb',
-    borderWidth: 1,
-    textStyle: { color: '#333', fontSize: 12 },
-    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-  },
-  grid: { top: 10, left: 0, right: 10, bottom: 0, containLabel: true },
-  xAxis: {
-    type: 'category',
-    data: ['8月', '9月', '10月', '11月', '12月', '1月', '2月', '3月', '4月', '5月', '6月', '7月'],
-    axisLine: { lineStyle: { color: '#e5e7eb' } },
-    axisTick: { show: false },
-    axisLabel: { color: '#999', fontSize: 12 },
-  },
-  yAxis: {
-    type: 'value',
-    min: 60,
-    max: 100,
-    splitLine: { lineStyle: { color: '#f0f0f0' } },
-    axisLabel: { color: '#999', fontSize: 12, formatter: '{value}%' },
-  },
-  series: [{
-    data: [72, 75, 78, 76, 80, 79, 81, 83, 85, 84, 86, 84.6],
-    type: 'line',
-    smooth: true,
-    lineStyle: { color: '#4f8cff', width: 3 },
-    itemStyle: { color: '#4f8cff' },
-    symbol: 'circle',
-    symbolSize: 6,
-    areaStyle: {
-      color: {
-        type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
-        colorStops: [
-          { offset: 0, color: 'rgba(79,140,255,0.25)' },
-          { offset: 1, color: 'rgba(79,140,255,0.02)' },
-        ],
-      },
-    },
-  }],
-}))
+// 当前角色：兼容 ROLE_ 前缀与未登录空值
+const role = computed(() =>
+  ((auth.userInfo?.role || auth.role || '') + '').replace(/^ROLE_/, '').toUpperCase()
+)
+// 管理员（校管理员/系统管理员）可同步刷新；管理员+教师可导出
+const canSync = computed(() => ['COLLEGE_ADMIN', 'SYSTEM_ADMIN'].includes(role.value))
+const canExport = computed(() => ['COLLEGE_ADMIN', 'SYSTEM_ADMIN', 'TEACHER'].includes(role.value))
 
-// 院系统计
-const departmentOption = computed(() => ({
-  tooltip: {
-    trigger: 'axis',
-    backgroundColor: '#fff',
-    borderColor: '#e5e7eb',
-    borderWidth: 1,
-    textStyle: { color: '#333', fontSize: 12 },
-    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-  },
-  grid: { top: 10, left: 0, right: 10, bottom: 0, containLabel: true },
-  xAxis: {
-    type: 'category',
-    data: ['计科', '电子', '机械', '经管', '文法', '艺术', '理学'],
-    axisLine: { lineStyle: { color: '#e5e7eb' } },
-    axisTick: { show: false },
-    axisLabel: { color: '#999', fontSize: 12 },
-  },
-  yAxis: {
-    type: 'value',
-    splitLine: { lineStyle: { color: '#f0f0f0' } },
-    axisLabel: { color: '#999', fontSize: 12 },
-  },
-  series: [
-    {
-      name: '毕业生',
-      type: 'bar',
-      data: [420, 380, 350, 400, 280, 260, 396],
-      barWidth: 16,
-      itemStyle: {
-        color: '#b4c8e8',
-        borderRadius: [4, 4, 0, 0],
-      },
-    },
-    {
-      name: '已就业',
-      type: 'bar',
-      data: [378, 326, 280, 340, 220, 205, 354],
-      barWidth: 16,
-      itemStyle: {
-        color: '#4f8cff',
-        borderRadius: [4, 4, 0, 0],
-      },
-    },
-  ],
-}))
+const loadingOverview = ref(false)
+const overview = ref<DashboardOverview | null>(null)
+const syncing = ref(false)
 
-// 就业去向饼图
-const pieOption = computed(() => ({
-  tooltip: {
-    trigger: 'item',
-    backgroundColor: '#fff',
-    borderColor: '#e5e7eb',
-    textStyle: { color: '#333', fontSize: 12 },
-  },
-  legend: { bottom: 0, textStyle: { color: '#666', fontSize: 12 } },
-  series: [{
-    type: 'pie',
-    radius: ['55%', '78%'],
-    center: ['50%', '45%'],
-    avoidLabelOverlap: false,
-    itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 2 },
-    label: { show: false },
-    data: [
-      { value: 735, name: '签约就业' },
-      { value: 420, name: '升学深造' },
-      { value: 315, name: '灵活就业' },
-      { value: 290, name: '自主创业' },
-      { value: 210, name: '出国留学' },
-      { value: 133, name: '待就业' },
-    ],
-    color: ['#4f8cff', '#52c41a', '#faad14', '#ff7a45', '#36cfc9', '#d9d9d9'],
-  }],
-}))
+const deptCompare = ref<DepartmentCompare[]>([])
+const destination = ref<DestinationChart[]>([])
+const industry = ref<IndustryChart[]>([])
+const companyType = ref<IndustryChart[]>([])
+const trend = ref<TrendChart[]>([])
 
-const activities = [
-  { id: 1, type: 'success', content: '计算机学院 张三 提交就业信息（腾讯科技）', time: '10分钟前' },
-  { id: 2, type: 'primary', content: '审核通过：电子工程学院 李四 就业去向', time: '28分钟前' },
-  { id: 3, type: 'warning', content: '待审核：机械工程学院 王五 提交三方协议', time: '1小时前' },
-  { id: 4, type: 'info', content: '系统通知：2026届毕业生就业信息开始填报', time: '2小时前' },
-  { id: 5, type: 'success', content: '经济管理学院就业率突破 85%', time: '4小时前' },
-  { id: 6, type: 'primary', content: '艺术设计学院 赵六 确认创业信息', time: '6小时前' },
-]
+const notifications = ref<NotificationItem[]>([])
+const unreadCount = ref(0)
+
+const logList = ref<OperationLogItem[]>([])
+const logTotal = ref(0)
+const loadingLogs = ref(false)
+const logQuery = reactive({ module: '', page: 1, size: 10 })
+
+// 图表组件引用（用于批量导出图表图片）
+type ChartComp = ComponentPublicInstance & { getImageDataURL: () => string | null }
+const chartDept = ref<ChartComp>()
+const chartTrend = ref<ChartComp>()
+const chartDest = ref<ChartComp>()
+const chartIndustry = ref<ChartComp>()
+const chartCompany = ref<ChartComp>()
+const exportingCharts = ref(false)
+
+// ---- 派生图表数据 ----
+const deptCats = computed(() => deptCompare.value.map(d => d.deptName))
+const deptRates = computed(() => deptCompare.value.map(d => d.rate))
+const destinationPie = computed(() => destination.value.map(d => ({ name: destLabel(d.destination), value: d.count })))
+const industryCats = computed(() => industry.value.map(i => i.name))
+const industryCounts = computed(() => industry.value.map(i => i.count))
+const companyTypePie = computed(() => companyType.value.map(c => ({ name: c.name, value: c.count })))
+const trendMonths = computed(() => trend.value.map(t => t.month))
+const trendRates = computed(() => trend.value.map(t => t.rate))
+
+function fmt(v?: number) {
+  return v === undefined || v === null ? '-' : v.toLocaleString()
+}
+
+// 去向显示名（当前项目 destination 直接存中文，未知值原样透传）
+const DEST_MAP: Record<string, string> = {
+  EMPLOYED: '签约就业', FURTHER_STUDY: '升学深造', STUDY_ABROAD: '出国留学',
+  ENTREPRENEURSHIP: '自主创业', FLEXIBLE: '灵活就业', MILITARY: '入伍',
+  WAITING: '待就业',
+}
+function destLabel(code: string) { return DEST_MAP[code] || code }
+
+// ---- 数据加载 ----
+async function loadAll() {
+  loadingOverview.value = true
+  try {
+    const [o, d, dist, ind, ct, tr] = await Promise.all([
+      getOverview(), getDepartmentCompare(), getDestinationDistribution(),
+      getIndustryDistribution(10), getCompanyTypeDistribution(), getMonthlyTrend(),
+    ])
+    overview.value = o.data
+    deptCompare.value = d.data
+    destination.value = dist.data
+    industry.value = ind.data
+    companyType.value = ct.data
+    trend.value = tr.data
+  } catch (e: any) {
+    ElMessage.error(e?.message || '看板数据加载失败')
+  } finally {
+    loadingOverview.value = false
+  }
+}
+
+async function loadNotifications(onlyUnread: boolean) {
+  try {
+    notifications.value = (await getNotifications(onlyUnread)).data
+    unreadCount.value = (await getUnreadCount()).data
+  } catch (e: any) {
+    ElMessage.error(e?.message || '通知加载失败')
+  }
+}
+
+async function readNotify(id: number) {
+  await markNotificationRead(id)
+  await loadNotifications(false)
+}
+
+async function loadLogs(page: number) {
+  logQuery.page = page
+  loadingLogs.value = true
+  try {
+    const res = await getOperationLogs({ module: logQuery.module || undefined, page, size: logQuery.size })
+    logList.value = res.data.records
+    logTotal.value = res.data.total
+  } catch (e: any) {
+    ElMessage.error(e?.message || '日志加载失败')
+  } finally {
+    loadingLogs.value = false
+  }
+}
+
+async function handleSync() {
+  syncing.value = true
+  try {
+    const r = await syncDashboard()
+    ElMessage.success(r.data?.message || '同步完成')
+    await loadAll()
+  } catch (e: any) {
+    ElMessage.error(e?.message || '同步失败')
+  } finally {
+    syncing.value = false
+  }
+}
+
+async function handleExport() {
+  try {
+    const blob = await exportDashboardCsv()
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `就业看板统计报表_${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('报表已导出')
+  } catch (e: any) {
+    ElMessage.error(e?.message || '导出失败')
+  }
+}
+
+/**
+ * 导出图表：将所有 ECharts 图表逐一导出为 PNG 图片并下载
+ */
+async function handleExportCharts() {
+  exportingCharts.value = true
+  try {
+    const charts: { ref: typeof chartDept, name: string }[] = [
+      { ref: chartDept, name: '院系就业率对比' },
+      { ref: chartTrend, name: '月度就业率趋势' },
+      { ref: chartDest, name: '就业去向分布' },
+      { ref: chartIndustry, name: '行业分布Top10' },
+      { ref: chartCompany, name: '单位性质分布' },
+    ]
+    let exported = 0
+    for (const c of charts) {
+      const comp = c.ref.value
+      const url = comp?.getImageDataURL()
+      if (!url) continue
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${c.name}_${new Date().toISOString().slice(0, 10)}.png`
+      a.click()
+      exported++
+      await new Promise(r => setTimeout(r, 300)) // 间隔避免浏览器拦截批量下载
+    }
+    if (exported === 0) {
+      ElMessage.warning('当前无图表可导出，请稍候数据加载完成')
+    } else {
+      ElMessage.success(`已导出 ${exported} 张图表`)
+    }
+  } catch (e: any) {
+    ElMessage.error(e?.message || '图表导出失败')
+  } finally {
+    exportingCharts.value = false
+  }
+}
+
+onMounted(() => {
+  loadAll()
+  loadNotifications(false)
+  loadLogs(1)
+})
 </script>
 
 <style scoped lang="scss">
 .dashboard {
-  max-width: 1400px;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 16px;
 }
 
-/* 统计卡片 */
-.stat-cards {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 20px;
-}
-
-.stat-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  transition: transform 0.2s, box-shadow 0.2s;
-  cursor: default;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  }
-}
-
-.card-inner {
+/* 顶部操作条 */
+.dashboard__toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 18px 22px;
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.22);
+  color: #fff;
+}
+.dashboard__title-wrap { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.dashboard__title { font-size: 22px; font-weight: 700; margin: 0; letter-spacing: 1px; }
+.dashboard__actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.toolbar-btn {
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.14) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  color: #fff !important;
+  transition: all 0.2s ease;
+  &:hover {
+    background: rgba(255, 255, 255, 0.24) !important;
+    border-color: rgba(255, 255, 255, 0.55) !important;
+  }
+  &:active { background: rgba(255, 255, 255, 0.08) !important; }
+}
+/* 导出按钮：醒目高亮，与整体蓝紫主题协调 */
+.toolbar-btn--accent {
+  background: #fff !important;
+  border-color: #fff !important;
+  color: #4f3cc9 !important;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  &:hover {
+    background: #f2eeff !important;
+    border-color: #f2eeff !important;
+    color: #3a2bb0 !important;
+  }
+  &:active { background: #e6e0ff !important; }
+}
+.sync-tag, .freq-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(255, 255, 255, 0.16) !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  color: #fff !important;
 }
 
-.card-label {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  margin-bottom: 8px;
+/* 统计卡片网格 */
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 18px;
 }
 
-.card-value {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--color-text);
-  margin-bottom: 6px;
-}
-
-.card-trend {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-
-  &.up { color: #52c41a; }
-  &.down { color: #ff4d4f; }
-}
-
-.icon-bg {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.stat-card.blue .icon-bg { background: #e8f0fe; color: #4f8cff; }
-.stat-card.green .icon-bg { background: #e6f7e9; color: #52c41a; }
-.stat-card.orange .icon-bg { background: #fff7e6; color: #fa8c16; }
-.stat-card.red .icon-bg { background: #fff1f0; color: #ff4d4f; }
-
-/* 图表区域 */
+/* 图表网格 */
 .chart-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 20px;
+  gap: 18px;
+  margin-bottom: 18px;
 }
-
-.bottom-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
 .chart-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border-radius: 16px;
+  border: none;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(31, 41, 55, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  &:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37, 99, 235, 0.10); }
+  :deep(.el-card__body) { padding: 18px 20px; }
 }
-
 .chart-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 10px;
-  margin-bottom: 16px;
-
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f2f4f7;
   h3 {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--color-text);
+    font-size: 16px; font-weight: 600; margin: 0; color: #1f2937;
+    &::before {
+      content: ''; display: inline-block; width: 4px; height: 14px;
+      margin-right: 8px; border-radius: 2px;
+      background: linear-gradient(180deg, #2563eb, #7c3aed);
+      vertical-align: -2px;
+    }
   }
 }
-
-.chart-subtitle {
-  font-size: 12px;
-  color: #999;
+.chart-tag {
+  font-size: 11px;
+  color: #5b6b8c;
+  background: #f2f5fa;
+  padding: 2px 8px;
+  border-radius: 10px;
 }
 
-.chart-body {
-  height: 300px;
+/* 通知 */
+.notify-filter { display: flex; align-items: center; gap: 6px; }
+.notify-item {
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #f0f0f0;
+  margin-bottom: 10px;
+  transition: all 0.2s;
+  &.unread { background: #f7faff; border-color: #dbe9ff; }
+  &:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
 }
+.notify-title { font-size: 14px; font-weight: 600; color: #303133; display: flex; align-items: center; gap: 6px; }
+.notify-content { font-size: 13px; color: #606266; margin: 6px 0; line-height: 1.5; }
+.notify-foot { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #909399; }
+.empty { text-align: center; color: #c0c4cc; padding: 40px 0; }
 
-.pie-body {
-  height: 280px;
-}
-
-/* 动态时间线 */
-.timeline-list {
-  padding-top: 4px;
-}
-
-.timeline-item {
-  display: flex;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid #f5f5f5;
-
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.timeline-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin-top: 6px;
-  flex-shrink: 0;
-
-  &.success { background: #52c41a; }
-  &.primary { background: #4f8cff; }
-  &.warning { background: #faad14; }
-  &.info { background: #909399; }
-}
-
-.timeline-text {
-  font-size: 13px;
-  color: var(--color-text);
-  line-height: 1.5;
-}
-
-.timeline-time {
-  font-size: 12px;
-  color: #999;
-  margin-top: 2px;
-}
+/* 操作日志卡片 */
+.log-card :deep(.el-card__body) { padding: 18px 20px; }
 
 @media (max-width: 1200px) {
-  .stat-cards {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .chart-grid,
-  .bottom-grid {
-    grid-template-columns: 1fr;
-  }
+  .stat-cards { grid-template-columns: repeat(2, 1fr); }
+  .chart-grid { grid-template-columns: 1fr; }
 }
 </style>

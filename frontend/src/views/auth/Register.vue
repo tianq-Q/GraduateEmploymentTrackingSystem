@@ -1,3 +1,27 @@
+<!--
+MIT License
+
+Copyright (c) 2026 Employment Tracking System
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+
 <template>
   <div class="register-page">
     <div class="register-card">
@@ -83,6 +107,11 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 注册页面（毕业生自助注册）
+ * - 填写姓名、学号/工号、密码、联系方式完成注册（调用 /auth/register）
+ * - 注册成功后自动登录并跳转到 /dashboard
+ */
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { UserFilled, EditPen, Lock, Phone, Message } from '@element-plus/icons-vue'
@@ -96,6 +125,7 @@ const authStore = useAuthStore()
 const formRef = ref()
 const loading = ref(false)
 
+// 注册表单数据
 const form = reactive({
   realName: '',
   studentNumber: '',
@@ -105,6 +135,7 @@ const form = reactive({
   email: '',
 })
 
+/** 自定义校验：确认密码必须与密码一致 */
 const validateConfirmPassword = (_rule: any, value: string, callback: any) => {
   if (value !== form.password) {
     callback(new Error('两次密码输入不一致'))
@@ -113,6 +144,7 @@ const validateConfirmPassword = (_rule: any, value: string, callback: any) => {
   }
 }
 
+// 表单校验规则
 const rules: FormRules = {
   realName: [{ required: true, message: '请输入真实姓名', trigger: 'blur' }],
   studentNumber: [{ required: true, message: '请输入学号/工号', trigger: 'blur' }],
@@ -126,6 +158,7 @@ const rules: FormRules = {
   ],
 }
 
+/** 提交注册 */
 async function handleRegister() {
   const valid = await formRef.value?.validate().catch(() => false)
   if (!valid) return
@@ -140,6 +173,7 @@ async function handleRegister() {
       email: form.email || undefined,
     })
     if (res.code === 200) {
+      // 注册成功自动登录
       authStore.setLogin(res.data)
       ElMessage.success('注册成功，已自动登录')
       router.push('/dashboard')
@@ -153,6 +187,7 @@ async function handleRegister() {
   }
 }
 
+/** 返回登录页 */
 function goLogin() {
   router.push('/login')
 }

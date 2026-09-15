@@ -1,3 +1,27 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2026 Employment Tracking System
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
@@ -47,24 +71,18 @@ const router = createRouter({
           meta: { title: '就业状态', roles: ['GRADUATE'] }
         },
         {
+          path: 'student/employment/attachment',
+          name: 'EmploymentAttachment',
+          component: () => import('@/views/student/employment/AttachmentManage.vue'),
+          meta: { title: '附件管理', roles: ['GRADUATE'] }
+        },
+        {
           path: 'student/history',
           name: 'ReviewHistory',
           component: () => import('@/views/student/history/ReviewHistory.vue'),
           meta: { title: '审核历史', roles: ['GRADUATE'] }
         },
-        {
-          path: 'student/jobs',
-          name: 'Jobs',
-          component: () => import('@/views/student/Jobs.vue'),
-          meta: { title: '求职中心', roles: ['GRADUATE'] }
-        },
         // 教师
-        {
-          path: 'teacher/students',
-          name: 'TeacherStudents',
-          component: () => import('@/views/teacher/StudentList.vue'),
-          meta: { title: '学生列表', roles: ['TEACHER', 'COLLEGE_ADMIN'] }
-        },
         {
           path: 'teacher/review',
           name: 'TeacherReview',
@@ -78,59 +96,59 @@ const router = createRouter({
           meta: { title: '代录就业', roles: ['TEACHER', 'COLLEGE_ADMIN'] }
         },
         {
-          path: 'teacher/statistics',
-          name: 'TeacherStatistics',
-          component: () => import('@/views/teacher/Statistics.vue'),
-          meta: { title: '统计分析', roles: ['TEACHER', 'COLLEGE_ADMIN', 'SYSTEM_ADMIN'] }
+          path: 'teacher/log',
+          name: 'AuditLogList',
+          component: () => import('@/views/teacher/log/AuditLogList.vue'),
+          meta: { title: '日志留存', roles: ['TEACHER', 'COLLEGE_ADMIN'] }
+        },
+        {
+          path: 'teacher/track-reminders',
+          name: 'TrackReminders',
+          component: () => import('@/views/teacher/track/TrackReminders.vue'),
+          meta: { title: '失业跟踪提醒', roles: ['TEACHER', 'COLLEGE_ADMIN'] }
         },
         // 校级管理员 + 系统管理员
         {
-          path: 'admin/overview',
-          name: 'AdminOverview',
-          component: () => import('@/views/admin/Overview.vue'),
-          meta: { title: '数据总览', roles: ['COLLEGE_ADMIN', 'SYSTEM_ADMIN'] }
-        },
-        {
           path: 'admin/graduate',
           name: 'AdminGraduate',
-          component: () => import('@/views/admin/graduate/GraduateList.vue'),
-          meta: { title: '毕业生管理', roles: ['COLLEGE_ADMIN', 'SYSTEM_ADMIN'] }
+          component: () => import('@/views/admin/Graduate.vue'),
+          meta: { title: '毕业生管理', roles: ['COLLEGE_ADMIN'] }
         },
         {
           path: 'admin/review',
           name: 'AdminReview',
           component: () => import('@/views/admin/review/ReviewList.vue'),
-          meta: { title: '就业终审', roles: ['COLLEGE_ADMIN', 'SYSTEM_ADMIN'] }
+          meta: { title: '就业终审', roles: ['COLLEGE_ADMIN'] }
+        },
+        {
+          path: 'admin/employment',
+          name: 'AdminEmployment',
+          component: () => import('@/views/admin/Employment.vue'),
+          meta: { title: '就业信息', roles: ['COLLEGE_ADMIN'] }
         },
         {
           path: 'admin/departments',
           name: 'Departments',
           component: () => import('@/views/admin/Department.vue'),
-          meta: { title: '院系管理', roles: ['COLLEGE_ADMIN', 'SYSTEM_ADMIN'] }
+          meta: { title: '院系管理', roles: ['COLLEGE_ADMIN'] }
         },
         {
           path: 'admin/majors',
           name: 'Majors',
           component: () => import('@/views/admin/Major.vue'),
-          meta: { title: '专业管理', roles: ['COLLEGE_ADMIN', 'SYSTEM_ADMIN'] }
+          meta: { title: '专业管理', roles: ['COLLEGE_ADMIN'] }
         },
         {
           path: 'admin/classes',
           name: 'Classes',
           component: () => import('@/views/admin/Class.vue'),
-          meta: { title: '班级管理', roles: ['COLLEGE_ADMIN', 'SYSTEM_ADMIN'] }
+          meta: { title: '班级管理', roles: ['COLLEGE_ADMIN'] }
         },
         {
           path: 'admin/teachers',
           name: 'AdminTeachers',
-          component: () => import('@/views/admin/TeacherList.vue'),
-          meta: { title: '教师管理', roles: ['COLLEGE_ADMIN', 'SYSTEM_ADMIN'] }
-        },
-        {
-          path: 'admin/students',
-          name: 'AdminStudents',
-          component: () => import('@/views/admin/StudentList.vue'),
-          meta: { title: '学生管理', roles: ['COLLEGE_ADMIN', 'SYSTEM_ADMIN'] }
+          component: () => import('@/views/admin/Teacher.vue'),
+          meta: { title: '教师管理', roles: ['COLLEGE_ADMIN'] }
         },
         // 系统管理员专属
         {
@@ -169,9 +187,14 @@ router.beforeEach((to, _from, next) => {
     return next('/login')
   }
 
+  // 系统管理员无业务看板，落地页固定为系统管理（避免访问 /dashboard 触发业务接口 403）
+  if (store.role === 'SYSTEM_ADMIN' && (to.path === '/dashboard' || to.path === '/')) {
+    return next('/admin/system/users')
+  }
+
   const roles = to.meta.roles as string[] | undefined
   if (roles && roles.length > 0 && !roles.includes(store.role)) {
-    return next('/dashboard')
+    return next(store.role === 'SYSTEM_ADMIN' ? '/admin/system/users' : '/dashboard')
   }
 
   next()

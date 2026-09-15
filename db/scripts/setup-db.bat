@@ -43,10 +43,16 @@ echo.
 ::: 获取脚本所在目录
 set SCRIPT_DIR=%~dp0
 set SCHEMA_FILE=%SCRIPT_DIR%001_schema.sql
+set PATCH_FILE=%SCRIPT_DIR%008_add_deleted_columns.sql
 set SEED_FILE=%SCRIPT_DIR%002_seed.sql
 
 if not exist "%SCHEMA_FILE%" (
     echo [错误] 找不到建表脚本: %SCHEMA_FILE%
+    pause
+    exit /b 1
+)
+if not exist "%PATCH_FILE%" (
+    echo [错误] 找不到列补丁脚本: %PATCH_FILE%
     pause
     exit /b 1
 )
@@ -56,7 +62,7 @@ if not exist "%SEED_FILE%" (
     exit /b 1
 )
 
-echo [1/3] 正在创建数据库 employment_tracking...
+echo [1/4] 正在创建数据库 employment_tracking...
 "%MYSQL_CMD%" -u %MYSQL_USER% -p%MYSQL_PASS% -h %MYSQL_HOST% -P %MYSQL_PORT% -e "CREATE DATABASE IF NOT EXISTS employment_tracking DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 if %errorlevel% neq 0 (
     echo.
@@ -69,7 +75,7 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo [2/3] 正在导入表结构...
+echo [2/4] 正在导入表结构...
 "%MYSQL_CMD%" -u %MYSQL_USER% -p%MYSQL_PASS% -h %MYSQL_HOST% -P %MYSQL_PORT% employment_tracking --default-character-set=utf8mb4 < "%SCHEMA_FILE%"
 if %errorlevel% neq 0 (
     echo.
@@ -81,7 +87,19 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo [3/3] 正在导入种子数据...
+echo [3/4] 正在应用列补丁(008_add_deleted_columns.sql)...
+"%MYSQL_CMD%" -u %MYSQL_USER% -p%MYSQL_PASS% -h %MYSQL_HOST% -P %MYSQL_PORT% employment_tracking --default-character-set=utf8mb4 < "%PATCH_FILE%"
+if %errorlevel% neq 0 (
+    echo.
+    echo [失败] 列补丁执行失败！
+    echo 请检查:
+    echo   1. 是否已在旧库上重复执行过 008 补丁(列已存在)
+    echo   2. 若为全新初始化，请确认 008_add_deleted_columns.sql 内容
+    pause
+    exit /b 1
+)
+
+echo [4/4] 正在导入种子数据...
 "%MYSQL_CMD%" -u %MYSQL_USER% -p%MYSQL_PASS% -h %MYSQL_HOST% -P %MYSQL_PORT% employment_tracking --default-character-set=utf8mb4 < "%SEED_FILE%"
 if %errorlevel% neq 0 (
     echo.
@@ -92,7 +110,7 @@ if %errorlevel% neq 0 (
 
 echo 数据库结构和数据导入完成！
 echo.
-echo [2/2] 验证导入结果...
+echo 验证导入结果...
 "%MYSQL_CMD%" -u %MYSQL_USER% -p%MYSQL_PASS% -h %MYSQL_HOST% -P %MYSQL_PORT% employment_tracking -e "SELECT '院系数' as 项目, COUNT(*) as 值 FROM department UNION SELECT '专业数', COUNT(*) FROM major UNION SELECT '字典数', COUNT(*) FROM dict_type;" 2>nul
 
 echo.

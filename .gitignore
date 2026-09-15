@@ -32,3 +32,36 @@ uploads/
 
 # Browser automation leftovers
 .playwright-cli/
+
+# 临时诊断/调试脚本（不入库）
+/_*.bat
+/_*.sql
+/_*.js
+/_*.txt
+/_*.err
+/_hash/
+/HashGen.java
+/fix_schema.bat
+/restart-backend.ps1
+/_*.ps1
+/scan_*.ps1
+/src_list.txt
+/dst_list.txt
+/backend_run.err
+
+# 历史归档/内部文档目录（不入库）
+/_archive/
+/_manual/
+
+# 误执行 maven 参数产生的空目录
+/-DskipTests/
+/-q/
+
+# 运行时环境配置（含数据库密码、JWT 密钥等敏感信息）
+# 仅提交 .example 文件作为参考，本地真实配置由开发者自行复制填写
+backend/src/main/resources/config/application-dev.yml
+backend/src/main/resources/config/application-prod.yml
+
+# 前端临时调试/探测脚本与输出文件
+frontend/_*
+frontend/console.log*

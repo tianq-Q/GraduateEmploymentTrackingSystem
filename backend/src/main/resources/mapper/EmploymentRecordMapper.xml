@@ -1,4 +1,157 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+MIT License
+
+Copyright (c) 2026 Employment Tracking System
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.college.employment.infrastructure.mapper.EmploymentRecordMapper">
+
+    <!--
+        数据看板统计 SQL 统一约束：
+        1. 仅统计 employment_record.review_status = 'APPROVED'（终审通过）的数据；
+        2. 通过 deptIds 集合做数据权限过滤（院系级），为空时不限制；
+        3. 所有查询均为只读聚合，不修改任何业务表。
+        employed（已落实去向）= 终审通过且 destination 不属于"待就业"的记录；
+        待就业 waiting = 毕业生总数 - 已落实人数。
+    -->
+
+    <sql id="deptFilter">
+        <if test="deptIds != null and deptIds.size() > 0">
+            AND g.dept_id IN
+            <foreach collection="deptIds" item="did" open="(" separator="," close=")">
+                #{did}
+            </foreach>
+        </if>
+    </sql>
+
+    <!-- 概览统计 -->
+    <select id="selectOverview" resultType="java.util.Map">
+        SELECT
+            (SELECT COUNT(1) FROM graduate g
+             <where><include refid="deptFilter"/></where>) AS totalGraduates,
+            (SELECT COUNT(1)
+             FROM employment_record er
+             LEFT JOIN graduate g ON g.id = er.graduate_id
+             WHERE er.review_status = 'APPROVED'
+               AND er.destination IS NOT NULL
+               AND er.destination != '待就业'
+             <include refid="deptFilter"/>) AS employedCount,
+            (SELECT COUNT(1)
+             FROM employment_record er
+             LEFT JOIN graduate g ON g.id = er.graduate_id
+             WHERE er.review_status = 'APPROVED'
+               AND er.destination IN ('升学')
+             <include refid="deptFilter"/>) AS furtherStudyCount,
+            (SELECT COUNT(1)
+             FROM employment_record er
+             LEFT JOIN graduate g ON g.id = er.graduate_id
+             WHERE er.review_status = 'APPROVED'
+               AND er.destination IN ('创业')
+             <include refid="deptFilter"/>) AS entrepreneurshipCount
+    </select>
+
+    <!-- 院系就业率对比 -->
+    <select id="selectDepartmentCompare" resultType="com.college.employment.application.dto.DepartmentCompareVO">
+        SELECT
+            d.id AS deptId,
+            d.name AS deptName,
+            COUNT(DISTINCT g.id) AS total,
+            COUNT(DISTINCT CASE WHEN er.review_status = 'APPROVED'
+                                 AND er.destination IS NOT NULL
+                                 AND er.destination != '待就业'
+                                THEN g.id END) AS employed,
+            CASE
+                WHEN COUNT(DISTINCT g.id) = 0 THEN 0
+                ELSE ROUND(COUNT(DISTINCT CASE WHEN er.review_status = 'APPROVED'
+                                                AND er.destination IS NOT NULL
+                                                AND er.destination != '待就业'
+                                               THEN g.id END)
+                           / COUNT(DISTINCT g.id) * 100, 2)
+            END AS rate
+        FROM department d
+        LEFT JOIN graduate g ON g.dept_id = d.id
+        LEFT JOIN employment_record er ON er.graduate_id = g.id AND er.review_status = 'APPROVED'
+        <where>
+            d.status = 1
+            <include refid="deptFilter"/>
+        </where>
+        GROUP BY d.id, d.name
+        ORDER BY rate DESC
+    </select>
+
+    <!-- 就业去向分布 -->
+    <select id="selectDestinationDistribution" resultType="com.college.employment.application.dto.DestinationChartVO">
+        SELECT
+            er.destination AS destination,
+            COUNT(1) AS count
+        FROM employment_record er
+        LEFT JOIN graduate g ON g.id = er.graduate_id
+        WHERE er.review_status = 'APPROVED'
+        <include refid="deptFilter"/>
+        GROUP BY er.destination
+        ORDER BY count DESC
+    </select>
+
+    <!-- 行业分布 Top N -->
+    <select id="selectIndustryDistribution" resultType="java.util.Map">
+        SELECT
+            COALESCE(er.industry, '未知') AS name,
+            COUNT(1) AS count
+        FROM employment_record er
+        LEFT JOIN graduate g ON g.id = er.graduate_id
+        WHERE er.review_status = 'APPROVED'
+        <include refid="deptFilter"/>
+        GROUP BY er.industry
+        ORDER BY count DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 单位性质分布 -->
+    <select id="selectCompanyTypeDistribution" resultType="java.util.Map">
+        SELECT
+            COALESCE(er.company_type, '未知') AS name,
+            COUNT(1) AS count
+        FROM employment_record er
+        LEFT JOIN graduate g ON g.id = er.graduate_id
+        WHERE er.review_status = 'APPROVED'
+        <include refid="deptFilter"/>
+        GROUP BY er.company_type
+        ORDER BY count DESC
+    </select>
+
+    <!-- 月度就业率趋势（按终审通过月份累计） -->
+    <select id="selectMonthlyTrend" resultType="java.util.Map">
+        SELECT
+            DATE_FORMAT(er.review_time, '%Y-%m') AS month,
+            COUNT(1) AS increment
+        FROM employment_record er
+        LEFT JOIN graduate g ON g.id = er.graduate_id
+        WHERE er.review_status = 'APPROVED'
+          AND er.review_time IS NOT NULL
+        <include refid="deptFilter"/>
+        GROUP BY DATE_FORMAT(er.review_time, '%Y-%m')
+        ORDER BY month
+    </select>
+
 </mapper>

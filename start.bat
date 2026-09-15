@@ -1,42 +1,39 @@
 @echo off
+setlocal
 echo ============================================
-echo   高校毕业生就业跟踪与分析系统 - 启动
+echo   Employment Tracking System - Launcher
 echo ============================================
 echo.
-
-:: 检查 MySQL 是否运行
-echo [1/3] 检查 MySQL 服务...
-sc query MySQL | find "RUNNING" >nul
-if %ERRORLEVEL% NEQ 0 (
-    echo [警告] MySQL 服务未运行！正在尝试启动...
+echo [1/3] Checking MySQL service...
+sc query MySQL | find "RUNNING" >nul 2>nul
+if errorlevel 1 (
+    sc query MySQL80 | find "RUNNING" >nul 2>nul
+)
+if errorlevel 1 (
+    echo [WARN] MySQL not running, trying to start...
     net start MySQL 2>nul
-    if %ERRORLEVEL% NEQ 0 (
-        echo [错误] MySQL 启动失败，请手动启动 MySQL 服务！
+    if errorlevel 1 (
+        net start MySQL80 2>nul
+    )
+    if errorlevel 1 (
+        echo [ERROR] Failed to start MySQL. Please start it manually!
         pause
         exit /b 1
     )
+    echo      MySQL started
+) else (
+    echo      MySQL is running
 )
-echo      MySQL 服务运行中 ^^
-
-:: 启动后端
-echo [2/3] 启动后端 Spring Boot (端口 8080)...
-set JAVA_HOME=D:\Java\jdk-17
-start "Backend-8080" cmd /k "cd /d "d:\vs cont\employment-tracking\backend" && D:\apache-maven-3.9.6\bin\mvn.cmd spring-boot:run"
-
-:: 等待后端启动
-echo     等待后端启动中（约 15 秒）...
-timeout /t 5 /nobreak >nul
-
-:: 启动前端
-echo [3/3] 启动前端 Vue3 Vite 开发服务器...
-start "Frontend-Vite" cmd /k "cd /d "d:\vs cont\employment-tracking\frontend" && npm run dev"
-
+echo [2/3] Starting backend Spring Boot (port 8080)...
+start "Backend-8080" /d "%~dp0" cmd /k "call run-backend.bat"
+echo [3/3] Starting frontend Vue3 Vite (port 5173)...
+start "Frontend-5173" /d "%~dp0" cmd /k "call run-frontend.bat"
 echo.
 echo ============================================
-echo   启动完成！
-echo   后端: http://localhost:8080
-echo   前端: http://localhost:5173
+echo   Backend : http://localhost:8080
+echo   Frontend: http://localhost:5173
 echo ============================================
 echo.
-echo 按任意键关闭此窗口（不会影响前后端运行）
+echo This window can be closed; services keep running.
 pause >nul
+endlocal
