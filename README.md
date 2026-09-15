@@ -50,6 +50,7 @@ employment-tracking/
 │       ├── components/          # 通用组件
 │       └── views/               # 页面（auth / student / teacher / admin / profile / dashboard）
 ├── db/                          # 数据库脚本 + ER 图
+├── deploy/                      # 部署配置模板（Nginx / systemd / application-dev.yml）
 ├── docs/                        # 需求、架构、接口文档
 └── README.md
 ```
@@ -83,11 +84,16 @@ npm run dev
 
 ## 打包部署
 
+本地打包：
+
 ```bash
 cd backend
 mvn package -DskipTests
 java -jar target/employment-tracking-1.0.0.jar
 ```
+
+部署到公网服务器（获得一个随时可访问的 `http://IP` 地址）：见 [docs/deploy.md](docs/deploy.md)，
+内含云厂商免费试用领取方式、Nginx + systemd 配置与排错清单。`deploy/` 目录下提供可直接复制的配置模板。
 
 ## 分支说明
 

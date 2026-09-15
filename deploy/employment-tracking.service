@@ -1,0 +1,22 @@
+[Unit]
+Description=Employment Tracking Backend
+After=mysql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/employment
+
+# 改成你自己的值：MySQL 用户名 / 密码 / JWT 密钥
+Environment="MYSQL_USER=emp"
+Environment="MYSQL_PASS=改成你的MySQL密码"
+Environment="JWT_SECRET=改成一段随机长字符串"
+
+# 2G 内存机型用 -Xmx768m；4G 机型可提到 -Xmx1200m
+ExecStart=/usr/bin/java -Xms256m -Xmx768m -jar /opt/employment/employment-tracking-1.0.0.jar
+
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

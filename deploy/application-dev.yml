@@ -1,0 +1,28 @@
+# 复制到服务器的 /opt/employment/config/application-dev.yml
+# 所有敏感值走环境变量，由 systemd 的 Environment= 注入，文件本身不含明文密码。
+
+spring:
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/employment_tracking?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&createDatabaseIfNotExist=true
+    username: ${MYSQL_USER:emp}
+    password: ${MYSQL_PASS}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 86400000   # 24 小时
+
+app:
+  upload:
+    # 相对 WorkingDirectory，即 /opt/employment/uploads
+    dir: ./uploads
+
+logging:
+  level:
+    root: INFO
+    com.college.employment: INFO
+  file:
+    name: /opt/employment/logs/employment.log
