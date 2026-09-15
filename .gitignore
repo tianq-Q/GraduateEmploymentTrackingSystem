@@ -65,3 +65,6 @@ backend/src/main/resources/config/application-prod.yml
 # 前端临时调试/探测脚本与输出文件
 frontend/_*
 frontend/console.log*
+
+# 部署打包产物
+*.tar.gz

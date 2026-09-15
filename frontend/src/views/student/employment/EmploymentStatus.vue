@@ -267,7 +267,7 @@ function openSubmitDialog() {
 /** 选择佐证文件：先上传附件获得附件 ID 再回填表单 */
 function onFileChange(file: UploadFile) {
   if (!file.raw) return
-  if (file.size > 10 * 1024 * 1024) {
+  if ((file.size ?? 0) > 10 * 1024 * 1024) {
     ElMessage.error('文件不能超过 10MB')
     fileList.value = []
     return
