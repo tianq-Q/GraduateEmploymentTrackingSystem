@@ -56,6 +56,10 @@ employment-tracking/
 
 ## 快速开始
 
+### 环境要求
+
+JDK 17 · Maven 3.6+ · Node.js 18+ · MySQL 8.0
+
 ### 1. 数据库
 
 在 MySQL 8 中执行 `db/scripts/` 下的初始化脚本，并按需修改 `backend/src/main/resources/application*.yml` 中的连接配置。
@@ -77,16 +81,13 @@ npm run dev
 
 浏览器访问 http://localhost:5173 ，默认后端接口地址 http://localhost:8080。
 
-## 一键启动（Windows）
+## 打包部署
 
-项目根目录提供批处理脚本：
-
-| 脚本 | 说明 |
-|------|------|
-| `start.bat` | 检查 MySQL 并一键启动前后端 |
-| `run-backend.bat` | 仅启动后端（有 jar 直接运行，否则 `mvn spring-boot:run`）|
-| `run-frontend.bat` | 仅启动前端 |
-| `build.bat` | Maven 打包后端 jar |
+```bash
+cd backend
+mvn package -DskipTests
+java -jar target/employment-tracking-1.0.0.jar
+```
 
 ## 分支说明
 
