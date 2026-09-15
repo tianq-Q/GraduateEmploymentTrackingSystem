@@ -64,6 +64,14 @@ JDK 17 · Maven 3.6+ · Node.js 18+ · MySQL 8.0
 
 在 MySQL 8 中执行 `db/scripts/` 下的初始化脚本，并按需修改 `backend/src/main/resources/application*.yml` 中的连接配置。
 
+脚本内置演示账号（`teacher` / `student` / `C20230001` 等），初始密码统一为 `gxbys888`。
+
+若数据库已建好、只想重置密码，直接在 MySQL 中执行：
+
+```sql
+UPDATE sys_user SET password = '$2b$10$jl2S5zTfm.Pht9FwsG6K4uO3LmKLwaxIUrc4nBSpvvTOB0vL5XlR.';
+```
+
 ### 2. 后端（端口 8080）
 
 ```bash
