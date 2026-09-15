@@ -18,7 +18,7 @@ if %ERRORLEVEL% EQU 0 (
     echo.
     echo  Next steps:
     echo    1. Close the OLD backend window / java process
-    echo    2. Run run-backend.jar.bat to start the new jar
+    echo    2. Run run-backend.bat to start the new jar
 ) else (
     echo.
     echo ============================================

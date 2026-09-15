@@ -83,13 +83,11 @@ npm run dev
 
 | 脚本 | 说明 |
 |------|------|
-| `start.bat` | 检查 MySQL 并启动前后端 |
-| `start-all.bat` | 一键启动前后端 |
-| `run-backend.bat` | 仅启动后端 |
+| `start.bat` | 检查 MySQL 并一键启动前后端 |
+| `run-backend.bat` | 仅启动后端（有 jar 直接运行，否则 `mvn spring-boot:run`）|
 | `run-frontend.bat` | 仅启动前端 |
-| `build.bat` | Maven 打包并运行后端 jar |
+| `build.bat` | Maven 打包后端 jar |
 
 ## 分支说明
 
-- `master`：发布分支（当前为空，待合并）
-- `qin`：开发分支，全部代码所在
+- `main`：主分支，全部代码所在
