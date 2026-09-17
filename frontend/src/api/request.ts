@@ -50,7 +50,10 @@ request.interceptors.response.use(
     // 否则业务失败会被误判为成功（例如提交就业记录失败却提示"提交成功"）
     if (body && typeof body === 'object' && 'code' in body && body.code !== 200) {
       ElMessage.error(body.message || '操作失败')
-      return Promise.reject(new Error(body.message || '操作失败'))
+      // 标记为业务错误，避免外层 error 回调再弹一次
+      const err = new Error(body.message || '操作失败')
+      ;(err as any).__businessError = true
+      return Promise.reject(err)
     }
     return body
   },
@@ -77,7 +80,10 @@ request.interceptors.response.use(
       }
       return Promise.reject(new Error('登录已过期'))
     }
-    ElMessage.error(error.response?.data?.message || '请求失败，请重试')
+    // 业务错误已在上方响应拦截器提示，避免重复弹窗
+    if (!(error as any).__businessError) {
+      ElMessage.error(error.response?.data?.message || '请求失败，请重试')
+    }
     return Promise.reject(error)
   },
 )

@@ -180,8 +180,9 @@ async function handleRegister() {
     } else {
       ElMessage.error(res.message || '注册失败')
     }
-  } catch {
-    ElMessage.error('注册失败，请检查网络连接')
+  } catch (e) {
+    // 业务错误/网络异常已由 axios 响应拦截器统一提示，避免重复弹窗
+    console.error(e)
   } finally {
     loading.value = false
   }
